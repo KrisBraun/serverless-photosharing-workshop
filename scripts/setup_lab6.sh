@@ -133,9 +133,11 @@ echo $VISION_DATA_TRANSFORM_URL
 # Workflow deployment #
 
 export WORKFLOW_REGION=europe-west4
-export WORKFLOW_NAME=picadaily-workflows
+export PROCESS_IMAGE_WORKFLOW_NAME=picadaily-process-image
+export GARBAGE_COLLECT_WORKFLOW_NAME=picadaily-garbage-collect
 
-gcloud workflows deploy ${WORKFLOW_NAME} --source=../workflows/workflows.yaml --location=${WORKFLOW_REGION}
+gcloud workflows deploy ${PROCESS_IMAGE_WORKFLOW_NAME} --source=../workflows/process_image.yaml --location=${WORKFLOW_REGION}
+gcloud workflows deploy ${GARBAGE_COLLECT_WORKFLOW_NAME} --source=../workflows/garbage_collect.yaml --location=${WORKFLOW_REGION}
 
 #################################
 # Workflow triggering Functions #
@@ -155,7 +157,7 @@ gcloud functions deploy ${SERVICE_NAME} \
   --trigger-resource=${BUCKET_PICTURES} \
   --trigger-event=google.storage.object.finalize \
   --allow-unauthenticated \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT},WORKFLOW_REGION=${WORKFLOW_REGION},WORKFLOW_NAME=${WORKFLOW_NAME},THUMBNAILS_URL=${THUMBNAILS_URL},COLLAGE_URL=${COLLAGE_URL},VISION_DATA_TRANSFORM_URL=${VISION_DATA_TRANSFORM_URL}
+  --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT},WORKFLOW_REGION=${WORKFLOW_REGION},WORKFLOW_NAME=${PROCESS_IMAGE_WORKFLOW_NAME},THUMBNAILS_URL=${THUMBNAILS_URL},COLLAGE_URL=${COLLAGE_URL},VISION_DATA_TRANSFORM_URL=${VISION_DATA_TRANSFORM_URL}
 
 # Trigger workflow for DELETION event
 
@@ -169,7 +171,7 @@ gcloud functions deploy ${SERVICE_NAME} \
   --trigger-resource=${BUCKET_PICTURES} \
   --trigger-event=google.storage.object.delete \
   --allow-unauthenticated \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT},WORKFLOW_REGION=${WORKFLOW_REGION},WORKFLOW_NAME=${WORKFLOW_NAME},THUMBNAILS_URL=${THUMBNAILS_URL},COLLAGE_URL=${COLLAGE_URL},VISION_DATA_TRANSFORM_URL=${VISION_DATA_TRANSFORM_URL}
+  --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT},WORKFLOW_REGION=${WORKFLOW_REGION},WORKFLOW_NAME=${GARBAGE_COLLECT_WORKFLOW_NAME},THUMBNAILS_URL=${THUMBNAILS_URL},COLLAGE_URL=${COLLAGE_URL},VISION_DATA_TRANSFORM_URL=${VISION_DATA_TRANSFORM_URL}
 
 ###########################
 # App Engine web frontend #

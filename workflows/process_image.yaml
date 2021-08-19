@@ -21,15 +21,6 @@ main:
           - gsUri: ${"gs://" + bucket + "/" + file}
           - projectId: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
           - urls: ${args.urls}
-    - eventTypeSwitch:
-        switch:
-            - condition: ${args.eventType == "google.storage.object.finalize"}
-              next: imageAnalysisCall
-            - condition: ${args.eventType == "google.storage.object.delete"}
-              next: pictureGarbageCollectionGCS
-    - eventTypeNotSupported:
-        raise: ${"eventType " + args.eventType + " is not supported"}
-        next: end
     - imageAnalysisCall:
         call: http.post
         args:
@@ -101,32 +92,3 @@ main:
           storeMetadata: ${storeMetadataResponse.code}
           thumbnail: ${thumbnailResponse.code}
           collage: ${collageResponse.code}
-    - pictureGarbageCollectionGCS:
-        try:
-          call: http.request
-          args:
-            url: ${"https://storage.googleapis.com/storage/v1/b/thumbnails-" + projectId + "/o/" + file}
-            auth:
-              type: OAuth2
-            method: DELETE
-          result: gcsDeletionResult
-        except:
-          as: e
-          steps:
-              - dummyResultInOutVar:
-                  assign:
-                      - gcsDeletionResult:
-                          code: 200
-                          body: "Workaround for empty body response"
-    - pictureGarbageCollectionFirestore:
-        call: http.request
-        args:
-          url: ${"https://firestore.googleapis.com/v1/projects/" + projectId + "/databases/(default)/documents/pictures/" + file}
-          auth:
-            type: OAuth2
-          method: DELETE
-        result: firestoreDeletionResult    
-    - deleteCompleted:
-        return:
-          gcsDeletion: ${gcsDeletionResult}
-          firestoreDeletion: ${firestoreDeletionResult.code}
